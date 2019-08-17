@@ -1,0 +1,13 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+	<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\XamariNES.Cartridge\XamariNES.Cartridge.csproj" />
+    <ProjectReference Include="..\XamariNES.Common\XamariNES.Common.csproj" />
+    <ProjectReference Include="..\XamariNES.Controller\XamariNES.Controller.csproj" />
+    <ProjectReference Include="..\XamariNES.CPU\XamariNES.CPU.csproj" />
+    <ProjectReference Include="..\XamariNES.PPU\XamariNES.PPU.csproj" />
+  </ItemGroup>
+</Project>

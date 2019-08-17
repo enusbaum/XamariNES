@@ -1,0 +1,56 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<ContentPage
+    xmlns="http://xamarin.com/schemas/2014/forms"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:skiaViews="clr-namespace:SkiaSharp.Views.Forms;assembly=SkiaSharp.Views.Forms"
+    xmlns:behavior="clr-namespace:XamariNES.UI.App.Behaviors;assembly=XamariNES.UI.App"
+    x:Class="XamariNES.UI.App.Pages.EmulatorHome"
+    BackgroundColor="Black">
+    <ContentPage.Content>
+        <StackLayout Padding="0"
+                     Spacing="0" BackgroundColor="Black">
+            <Grid VerticalOptions="FillAndExpand" HorizontalOptions="FillAndExpand" Padding="0" ColumnSpacing="0" RowSpacing="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="20*" />
+                    <RowDefinition Height="60*" />
+                    <RowDefinition Height="20*" />
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <skiaViews:SKCanvasView x:Name="canvasConsole"
+                                        EnableTouchEvents="true"
+                                        VerticalOptions="FillAndExpand"
+                                        HorizontalOptions="FillAndExpand"
+                                        Grid.Row="0"
+                                        Grid.Column="0">
+                    <skiaViews:SKCanvasView.Behaviors>
+                        <behavior:PaintSurfaceBehavior Command="{Binding PaintConsoleCommand}" />
+                        <behavior:EventToCommandBehavior EventName="Touch" Command="{Binding TouchConsoleCommand}" />
+                    </skiaViews:SKCanvasView.Behaviors>
+                </skiaViews:SKCanvasView>
+                <skiaViews:SKCanvasView x:Name="canvasEmulator"
+                                        VerticalOptions="FillAndExpand"
+                                        HorizontalOptions="FillAndExpand"
+                                        Grid.Row="1"
+                                        Grid.Column="0">
+                    <skiaViews:SKCanvasView.Behaviors>
+                        <behavior:PaintSurfaceBehavior Command="{Binding PaintEmulatorCommand}" />
+                    </skiaViews:SKCanvasView.Behaviors>
+                </skiaViews:SKCanvasView>
+                <skiaViews:SKCanvasView x:Name="canvasController"
+                                        EnableTouchEvents="true"
+                                        VerticalOptions="FillAndExpand"
+                                        HorizontalOptions="FillAndExpand"
+                                        Grid.Row="2"
+                                        Grid.Column="0">
+                    <skiaViews:SKCanvasView.Behaviors>
+                        <behavior:PaintSurfaceBehavior Command="{Binding PaintControllerCommand}" />
+                        <behavior:EventToCommandBehavior EventName="Touch" Command="{Binding TouchControllerCommand}" />
+                    </skiaViews:SKCanvasView.Behaviors>
+                 </skiaViews:SKCanvasView>
+
+            </Grid>
+        </StackLayout>
+    </ContentPage.Content>
+</ContentPage>
