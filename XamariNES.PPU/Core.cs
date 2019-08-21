@@ -114,131 +114,130 @@ namespace XamariNES.PPU
             //Set Everything to a startup state
             Reset();
 
-            //Register Interceptors that will map CPU memory addresses to PPU Registers
-            for (var i = 0x2000; i < 0x3FFF; i += 8)
+            //These memory addresses are mapped on the CPU addressing range, so
+            //the CPU memory controller will handle the mirroring index
+
+            //PPUCTRL ($2000, WRITE)
+            memoryMapper.RegisterWriteInterceptor(delegate (int offset, byte value)
             {
-                //PPUCTRL ($2000, WRITE)
-                memoryMapper.RegisterWriteInterceptor(delegate (int offset, byte value)
-                {
                     //Update Register
                     _registerPPUCTRL = value;
 
                     //Cache the new value here
                     _registerPPUSCROLL = (_registerPPUSCROLL & 0xF3FF) | ((value & 0x03) << 10);
-                }, i);
+            }, 0x2000);
 
-                //PPUMASK ($2001, WRITE)
-                memoryMapper.RegisterWriteInterceptor(delegate(int offset, byte value) { _registerPPUMASK = value; },  i + 1);
+            //PPUMASK ($2001, WRITE)
+            memoryMapper.RegisterWriteInterceptor(delegate (int offset, byte value) { _registerPPUMASK = value; }, 0x2001);
 
-                //PPUSTATUS ($2002, READ)
-                memoryMapper.RegisterReadInterceptor(delegate(int offset)
-                {
-                    var output = _registerPPUSTATUS;
-                    _registerPPUSTATUS &= PPUStatusFlags.VerticalBlankStarted;
-                    _writeOrderToggle = 0;
-                    return output;
+            //PPUSTATUS ($2002, READ)
+            memoryMapper.RegisterReadInterceptor(delegate (int offset)
+            {
+                var output = _registerPPUSTATUS;
+                _registerPPUSTATUS &= PPUStatusFlags.VerticalBlankStarted;
+                _writeOrderToggle = 0;
+                return output;
 
-                },  i + 2);
+            }, 0x2002);
 
-                //OAMADDR ($2003, WRITE)
-                memoryMapper.RegisterWriteInterceptor(delegate(int offset, byte value)
-                {
-                    _registerOAMADDR = value;
-                }, i + 3);
+            //OAMADDR ($2003, WRITE)
+            memoryMapper.RegisterWriteInterceptor(delegate (int offset, byte value)
+            {
+                _registerOAMADDR = value;
+            }, 0x2003);
 
-                //OAMDATA ($2004, READ)
-                memoryMapper.RegisterReadInterceptor(offset => _oamData[_registerOAMADDR], i + 4);
+            //OAMDATA ($2004, READ)
+            memoryMapper.RegisterReadInterceptor(offset => _oamData[_registerOAMADDR], 0x2004);
 
-                //OAMDATA ($2004, WRITE)
-                memoryMapper.RegisterWriteInterceptor(delegate(int offset, byte value)
-                {
+            //OAMDATA ($2004, WRITE)
+            memoryMapper.RegisterWriteInterceptor(delegate (int offset, byte value)
+            {
                     //When data is written to the Data register, we buffer it our our array here
                     _oamData[_registerOAMADDR] = value;
-                    _registerOAMADDR++;
+                _registerOAMADDR++;
 
-                }, i + 4);
+            }, 0x2004);
 
-                //PPUSCROLL ($2005, WRITE)
-                memoryMapper.RegisterWriteInterceptor(delegate (int offset, byte value)
-                {
+            //PPUSCROLL ($2005, WRITE)
+            memoryMapper.RegisterWriteInterceptor(delegate (int offset, byte value)
+            {
                     //Update Local Values
                     if (_writeOrderToggle == 0)
+                {
+                    this._registerPPUSCROLL = (this._registerPPUSCROLL & 0xFFE0) | (value >> 3);
+                    _X = (byte)(value & 0x07);
+                    _writeOrderToggle = 1;
+                }
+                else
+                {
+                    this._registerPPUSCROLL &= 0xC1F;
+                    this._registerPPUSCROLL |= (value & 0x07) << 12; // CBA
+                        this._registerPPUSCROLL |= (value & 0xF8) << 2; // HG FED
+                        _writeOrderToggle = 0;
+                }
+            }, 0x2005);
+
+            //PPUADDR ($2006, WRITE)
+            memoryMapper.RegisterWriteInterceptor(
+                delegate (int offset, byte value)
+                {
+                    _registerPPUADDR = value;
+                    if (_writeOrderToggle == 0)
                     {
-                        this._registerPPUSCROLL = (this._registerPPUSCROLL & 0xFFE0) | (value >> 3);
-                        _X = (byte)(value & 0x07);
+                        this._registerPPUSCROLL = (this._registerPPUSCROLL & 0x00FF) | (value << 8);
                         _writeOrderToggle = 1;
                     }
                     else
                     {
-                        this._registerPPUSCROLL &= 0xC1F;
-                        this._registerPPUSCROLL |= (value & 0x07) << 12; // CBA
-                        this._registerPPUSCROLL |= (value & 0xF8) << 2; // HG FED
+                        this._registerPPUSCROLL = (this._registerPPUSCROLL & 0xFF00) | value;
+                        _registerPPUADDR = this._registerPPUSCROLL;
                         _writeOrderToggle = 0;
                     }
-                }, i + 5);
+                }, 0x2006);
 
-                //PPUADDR ($2006, WRITE)
-                memoryMapper.RegisterWriteInterceptor(
-                    delegate (int offset, byte value)
-                    {
-                        _registerPPUADDR = value;
-                        if (_writeOrderToggle == 0)
-                        {
-                            this._registerPPUSCROLL = (this._registerPPUSCROLL & 0x00FF) | (value << 8);
-                            _writeOrderToggle = 1;
-                        }
-                        else
-                        {
-                            this._registerPPUSCROLL = (this._registerPPUSCROLL & 0xFF00) | value;
-                            _registerPPUADDR = this._registerPPUSCROLL;
-                            _writeOrderToggle = 0;
-                        }
-                    },  i + 6);
-
-                //PPUDATA ($2007, READ)
-                memoryMapper.RegisterReadInterceptor(delegate(int offset)
-                {
-                    var data = PPUMemory.ReadByte(_registerPPUADDR);
+            //PPUDATA ($2007, READ)
+            memoryMapper.RegisterReadInterceptor(delegate (int offset)
+            {
+                var data = PPUMemory.ReadByte(_registerPPUADDR);
 
                     // Buffered read emulation
                     // https://wiki.nesdev.com/w/index.php/PPU_registers#The_PPUDATA_read_buffer_.28post-fetch.29
                     if (_registerPPUADDR < 0x3F00)
-                    {
-                        byte bufferedData = _registerPPUDATABuffer;
-                        _registerPPUDATABuffer = data;
-                        data = bufferedData;
-                    }
-                    else
-                    {
-                        _registerPPUDATABuffer = PPUMemory.ReadByte(_registerPPUADDR - 0x1000);
-                    }
-
-                    //Increment PPU VRAM Address depending on VRAMAddressIncrement Flag
-                    _registerPPUADDR +=
-                         _registerPPUCTRL.IsFlagSet(PPUCtrlFlags.VRAMAddressIncrement)
-                            ? 32
-                            : 1;
-
-                    return data;
-
-                }, i + 7);
-
-                //PPUDATA ($2007, WRITE)
-                memoryMapper.RegisterWriteInterceptor(delegate(int offset, byte value)
                 {
-                    PPUMemory.WriteByte(_registerPPUADDR, value);
+                    byte bufferedData = _registerPPUDATABuffer;
+                    _registerPPUDATABuffer = data;
+                    data = bufferedData;
+                }
+                else
+                {
+                    _registerPPUDATABuffer = PPUMemory.ReadByte(_registerPPUADDR - 0x1000);
+                }
 
                     //Increment PPU VRAM Address depending on VRAMAddressIncrement Flag
                     _registerPPUADDR +=
-                       _registerPPUCTRL.IsFlagSet(PPUCtrlFlags.VRAMAddressIncrement)
-                            ? 32
-                            : 1;
+                     _registerPPUCTRL.IsFlagSet(PPUCtrlFlags.VRAMAddressIncrement)
+                        ? 32
+                        : 1;
 
-                },  i + 7);
-            }
+                return data;
+
+            }, 0x2007);
+
+            //PPUDATA ($2007, WRITE)
+            memoryMapper.RegisterWriteInterceptor(delegate (int offset, byte value)
+            {
+                PPUMemory.WriteByte(_registerPPUADDR, value);
+
+                    //Increment PPU VRAM Address depending on VRAMAddressIncrement Flag
+                    _registerPPUADDR +=
+                   _registerPPUCTRL.IsFlagSet(PPUCtrlFlags.VRAMAddressIncrement)
+                        ? 32
+                        : 1;
+
+            }, 0x2007);
 
             //OAMDMA ($4014, WRITE)
-            memoryMapper.RegisterWriteInterceptor(delegate(int offset, byte value)
+            memoryMapper.RegisterWriteInterceptor(delegate (int offset, byte value)
             {
                 _oamData = dmaWriteDelegate(_oamData, _registerOAMADDR, value << 8);
             }, 0x4014);

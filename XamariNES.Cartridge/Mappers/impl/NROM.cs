@@ -13,7 +13,7 @@ namespace XamariNES.Cartridge.Mappers.impl
     {
         //ROM Internal Memory
         private readonly byte[] _prgRom = new byte[0x8000];
-        private readonly byte[] _chrRom = new byte[8192];
+        private readonly byte[] _chrRom = new byte[0x2000];
 
         public enumNametableMirroring NametableMirroring { get; set; }
 
@@ -49,10 +49,10 @@ namespace XamariNES.Cartridge.Mappers.impl
         {
             switch (memoryType)
             {
-                case enumMemoryType.CPU:
-                    return _prgRom[CpuOffsetToPrgRomOffset(offset)];
                 case enumMemoryType.PPU:
-                    return !ReadInterceptors.TryGetValue(offset, out currentReadInterceptor) ? _chrRom[offset] : currentReadInterceptor(offset);
+                    return _chrRom[offset];
+                case enumMemoryType.CPU:
+                    return !ReadInterceptors.TryGetValue(offset, out currentReadInterceptor) ? _prgRom[CpuOffsetToPrgRomOffset(offset)] : currentReadInterceptor(offset);
                 default:
                     throw new ArgumentOutOfRangeException(nameof(memoryType), memoryType, null);
             }
@@ -66,15 +66,15 @@ namespace XamariNES.Cartridge.Mappers.impl
         /// <param name="data"></param>
         public void WriteByte(enumMemoryType memoryType, int offset, byte data)
         {
-            switch(memoryType)
+            switch (memoryType)
             {
-                case enumMemoryType.CPU:
-                        _prgRom[CpuOffsetToPrgRomOffset(offset)] = data;
-                        return;
                 case enumMemoryType.PPU:
+                    _chrRom[offset] = data;
+                    return;
+                case enumMemoryType.CPU:
                     if (!WriteInterceptors.TryGetValue(offset, out currentWriteInterceptor))
                     {
-                        _chrRom[offset] = data;
+                        _prgRom[CpuOffsetToPrgRomOffset(offset)] = data;
                     }
                     else
                     {

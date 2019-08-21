@@ -37,7 +37,7 @@ namespace XamariNES.CPU
 
             //NES PPU Registers (Repeats every 8 bytes)
             if (offset <= 0x3FFF)
-                return _memoryMapper.ReadByte(enumMemoryType.PPU, offset);
+                return _memoryMapper.ReadByte(enumMemoryType.CPU, 0x2000 + (offset % 8));
 
             //NES APU & I/O Registers
             if (offset <= 0x4017)
@@ -77,9 +77,16 @@ namespace XamariNES.CPU
             }
 
             //NES PPU Registers (repeats every 8 bytes and OAM register)
-            if (offset <= 0x3FFF || offset == 0x4014)
+            if (offset <= 0x3FFF)
             {
-                _memoryMapper.WriteByte(enumMemoryType.PPU, offset, data);
+                _memoryMapper.WriteByte(enumMemoryType.CPU, 0x2000 + (offset % 8), data);
+                return;
+            }
+
+            //OAM DMA
+            if (offset == 0x4014)
+            {
+                _memoryMapper.WriteByte(enumMemoryType.CPU, offset, data);
                 return;
             }
 
