@@ -63,10 +63,6 @@ namespace XamariNES.Cartridge.Mappers.impl
             if (offset <= 0x3FFF)
                 return ReadInterceptors.TryGetValue(offset, out currentReadInterceptor) ? currentReadInterceptor(offset) : (byte)0x0;
 
-            //Some UxROM boards from Nintendo have bus conflicts, we avoid these here
-            if (offset >= 0x6000 && offset < 0x8000)
-                return 0x0;
-
             //Fixed PRG ROM
             if (offset <= 0xFFFF)
             {
