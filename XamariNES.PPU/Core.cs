@@ -739,12 +739,20 @@ namespace XamariNES.PPU
             _tileShiftRegister |= data << 32;
         }
 
+        /// <summary>
+        ///     The coarse X component of _registerPPUADDR needs to be incremented when the next tile is reached
+        ///
+        ///     Bits 0-4 are incremented, with overflow toggling bit 10. This means that bits 0-4 count from
+        ///     0 to 31 across a single nametable, and bit 10 selects the current nametable horizontally.
+        ///
+        ///     More Info: https://wiki.nesdev.com/w/index.php/PPU_scrolling#Coarse_X_increment
+        /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void IncrementX()
         {
             if ((_registerPPUADDR & 0x001F) == 31)
             {
-                _registerPPUADDR &= ~0x001F; // Reset Coarse X
+                _registerPPUADDR &= ~0x001F; // Coarse X = 0
                 _registerPPUADDR ^= 0x0400; // Switch horizontal nametable
             }
             else
@@ -753,17 +761,26 @@ namespace XamariNES.PPU
             }
         }
 
+
+        /// <summary>
+        ///     If rendering is enabled, fine Y is incremented at dot 256 of each scanline, overflowing to coarse Y,
+        ///     and finally adjusted to wrap among the nametables vertically.
+        ///
+        ///     Bits 12-14 are fine Y. Bits 5-9 are coarse Y. Bit 11 selects the vertical nametable.
+        ///
+        ///     More Info: https://wiki.nesdev.com/w/index.php/PPU_scrolling#Y_increment
+        /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void IncrementY()
         {
-            if ((_registerPPUADDR & 0x7000) != 0x7000)
-            { // if fine Y < 7
+            if ((_registerPPUADDR & 0x7000) != 0x7000) // if fine Y < 7
+            { 
                 _registerPPUADDR += 0x1000; // increment fine Y
             }
             else
             {
-                _registerPPUADDR &= ~0x7000; // Set fine Y to 0
-                var y = (_registerPPUADDR & 0x03E0) >> 5; // y = coarse Y
+                _registerPPUADDR &= ~0x7000; // Fine Y = 0
+                var y = (_registerPPUADDR & 0x03E0) >> 5; // y = Coarse Y
                 switch (y)
                 {
                     case 29:
@@ -793,22 +810,36 @@ namespace XamariNES.PPU
             return (byte)((_tileShiftRegister >> (_X * 4)) & 0xF);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private int CoarseX()
-        {
-            return _registerPPUADDR & 0x1f;
-        }
+        /*---------------------------
+         * Tile & Attribute Fetching
+         *---------------------------
+         *
+         * NN 1111 YYY XXX
+         * || |||| ||| +++-- high 3 bits of coarse X (x/4)
+         * || |||| +++------ high 3 bits of coarse Y (y/4)
+         * || ++++---------- attribute offset (960 bytes)
+         * ++--------------- nametable select
+         */
 
+        /// <summary>
+        ///     Retrieve Coarse X
+        /// </summary>
+        /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private int CoarseY()
-        {
-            return (_registerPPUADDR >> 5) & 0x1f;
-        }
+        private int CoarseX() =>  _registerPPUADDR & 0x1f;
 
+        /// <summary>
+        ///     Retrieve Coarse Y
+        /// </summary>
+        /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private int FineY()
-        {
-            return (_registerPPUADDR >> 12) & 0x7;
-        }
-    }
+        private int CoarseY() => (_registerPPUADDR >> 5) & 0x1f;
+
+        /// <summary>
+        ///     Retrieve Fine Y
+        /// </summary>
+        /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private int FineY() =>  (_registerPPUADDR >> 12) & 0x7;
+}
 }
