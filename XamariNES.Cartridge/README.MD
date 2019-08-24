@@ -22,8 +22,8 @@ Currently Supported Mappers in XamariNES:
 | ------ | ----------- | ----------- | ----------- | ----------- |
 | 0 | [NROM](https://wiki.nesdev.com/w/index.php/NROM) | YES | 119 | [List](http://bootgod.dyndns.org:7777/search.php?ines=0&group=groupid)
 | 1 | [MMC1](https://wiki.nesdev.com/w/index.php/MMC1) | YES | 391 | [List](http://bootgod.dyndns.org:7777/search.php?ines=1&group=groupid)
-| 2 | [UxROM](https://wiki.nesdev.com/w/index.php/UxROM) | NO | 156 | [List](http://bootgod.dyndns.org:7777/search.php?ines=2&group=groupid)
-| 3 | [CNROM](https://wiki.nesdev.com/w/index.php/CNROM) | NO | 105 | [List](http://bootgod.dyndns.org:7777/search.php?ines=3&group=groupid)
+| 2 | [UxROM](https://wiki.nesdev.com/w/index.php/UxROM) | YES | 156 | [List](http://bootgod.dyndns.org:7777/search.php?ines=2&group=groupid)
+| 3 | [CNROM](https://wiki.nesdev.com/w/index.php/CNROM) | YES | 105 | [List](http://bootgod.dyndns.org:7777/search.php?ines=3&group=groupid)
 | 4 | [MMC3](https://wiki.nesdev.com/w/index.php/MMC3) | NO | 303 | [List](http://bootgod.dyndns.org:7777/search.php?ines=4&group=groupid)
 
 Full list of iNES Mappers: [Link](https://wiki.nesdev.com/w/index.php/Mapper)
