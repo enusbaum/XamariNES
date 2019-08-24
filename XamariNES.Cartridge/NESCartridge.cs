@@ -31,6 +31,7 @@ namespace XamariNES.Cartridge
         private byte _chrRomBanks;
         private byte[] _prgRam;
         private bool UsesCHRRAM;
+        private enumNametableMirroring _nametableMirroring;
 
         public IMapper MemoryMapper { get; set; }
 
@@ -97,6 +98,9 @@ namespace XamariNES.Cartridge
             if (Flags6.IsFlagSet(Byte6Flags.TrainerPresent))
                 prgROMOffset += 512;
 
+            //Set Initial Mirroring Mode
+            _nametableMirroring = Flags6.IsFlagSet(Byte6Flags.VerticalMirroring) ? enumNametableMirroring.Vertical : enumNametableMirroring.Horizontal;
+
             //Set Flags7
             Flags7 = ROM[7];
 
@@ -113,11 +117,11 @@ namespace XamariNES.Cartridge
             var mapperNumber = Flags7 & 0xF0 | (Flags6 >> 4 & 0xF);
             switch (mapperNumber)
             {
-                case 0 when Flags6.IsFlagSet(Byte6Flags.VerticalMirroring):
-                    MemoryMapper = new NROM(_prgRom, _chrRom, enumNametableMirroring.Vertical);
+                case 0:
+                    MemoryMapper = new NROM(_prgRom, _chrRom, _nametableMirroring);
                     break;
-                case 0 when !Flags6.IsFlagSet(Byte6Flags.VerticalMirroring):
-                    MemoryMapper = new NROM(_prgRom, _chrRom);
+                case 1:
+                    MemoryMapper = new MMC1(_prgRomBanks, _chrRom, _prgRom, UsesCHRRAM, false, _nametableMirroring);
                     break;
                 default:
                     throw new Exception($"Unsupported Mapper: {mapperNumber}");
