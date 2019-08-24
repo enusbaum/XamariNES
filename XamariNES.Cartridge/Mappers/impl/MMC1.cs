@@ -39,7 +39,6 @@ namespace XamariNES.Cartridge.Mappers.impl
         private readonly byte[] _chrRom;
 
         //Registers
-        private int _registerLoad;
         private int _registerShift;
         private int _registerShiftOffset;
         private int _registerControl;
@@ -58,7 +57,7 @@ namespace XamariNES.Cartridge.Mappers.impl
         private int _prgBank1Offset;
 
         //Toggles for RAM
-        private bool _useChrRam;
+        private readonly bool _useChrRam;
         private bool _usePrgRam;
 
         public enumNametableMirroring NametableMirroring { get; set; }
@@ -97,12 +96,7 @@ namespace XamariNES.Cartridge.Mappers.impl
 
             //PPU Registers
             if (offset <= 0x3FFF)
-            {
-                if (ReadInterceptors.TryGetValue(offset, out currentReadInterceptor))
-                    return currentReadInterceptor(offset);
-
-                return 0x0;
-            }
+                return ReadInterceptors.TryGetValue(offset, out currentReadInterceptor) ? currentReadInterceptor(offset) : (byte) 0x0;
 
             // PRG RAM Bank == $6000-$7FFF
             if (offset >= 0x6000 && offset <= 0x7FFF)
