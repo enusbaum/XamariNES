@@ -113,7 +113,7 @@ namespace XamariNES.Cartridge
             //Load CHR ROM
             Array.Copy(ROM, prgROMOffset+prgROMSize, _chrRom, 0, chrROMSize);
 
-            //Load Proper Mapper & Set Nametable Mirroring Mode
+            //Load Proper Mapper
             var mapperNumber = Flags7 & 0xF0 | (Flags6 >> 4 & 0xF);
             switch (mapperNumber)
             {
@@ -122,6 +122,9 @@ namespace XamariNES.Cartridge
                     break;
                 case 1:
                     MemoryMapper = new MMC1(_prgRomBanks, _chrRom, _prgRom, UsesCHRRAM, false, _nametableMirroring);
+                    break;
+                case 2:
+                    MemoryMapper = new UxROM(_prgRom, _prgRomBanks, _chrRom, _nametableMirroring);
                     break;
                 default:
                     throw new Exception($"Unsupported Mapper: {mapperNumber}");
