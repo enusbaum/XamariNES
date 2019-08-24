@@ -19,7 +19,7 @@ To support this, the iNES ROM format specifies which Mapper a given ROM is to us
 Currently Supported Mappers in XamariNES:
 
 | Mapper # | Name | Supported | Number of Games |ROM List |
-| ------ | ----------- | ----------- | ----------- |
+| ------ | ----------- | ----------- | ----------- | ----------- |
 | 0 | [NROM](https://wiki.nesdev.com/w/index.php/NROM) | YES | 119 | [List](http://bootgod.dyndns.org:7777/search.php?ines=0&group=groupid)
 | 1 | [MMC1](https://wiki.nesdev.com/w/index.php/MMC1) | YES | 391 | [List](http://bootgod.dyndns.org:7777/search.php?ines=1&group=groupid)
 | 2 | [UxROM](https://wiki.nesdev.com/w/index.php/UxROM) | NO | 156 | [List](http://bootgod.dyndns.org:7777/search.php?ines=2&group=groupid)

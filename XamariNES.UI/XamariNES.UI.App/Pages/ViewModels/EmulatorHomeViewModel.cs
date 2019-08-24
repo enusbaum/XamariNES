@@ -147,8 +147,10 @@ namespace XamariNES.UI.App.Pages.ViewModels
                             buttonPressed = enumButtons.Select;
                         else if (_controllerARect.Contains(e.Location))
                             buttonPressed = enumButtons.A;
-                        else
+                        else if (_controllerBRect.Contains(e.Location))
                             buttonPressed = enumButtons.B;
+                        else
+                            return;
 
                         //Track The Event
                         _controllerEventTracker.Add(e.Id, buttonPressed);
