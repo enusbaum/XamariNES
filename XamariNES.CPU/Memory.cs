@@ -37,7 +37,7 @@ namespace XamariNES.CPU
 
             //NES PPU Registers (Repeats every 8 bytes)
             if (offset <= 0x3FFF)
-                return _memoryMapper.ReadByte(enumMemoryType.CPU, 0x2000 + (offset % 8));
+                return _memoryMapper.ReadByte(0x2000 + offset % 8);
 
             //NES APU & I/O Registers
             if (offset <= 0x4017)
@@ -57,7 +57,7 @@ namespace XamariNES.CPU
 
             //Cartridge space: PRG ROM, PRG RAM, and mapper registers 
             if (offset >= 0x4020) 
-                return _memoryMapper.ReadByte(enumMemoryType.CPU, offset);
+                return _memoryMapper.ReadByte(offset);
 
             throw new Exception($"Invalid CPU read at address {offset:X4}");
         }
@@ -79,14 +79,14 @@ namespace XamariNES.CPU
             //NES PPU Registers (repeats every 8 bytes and OAM register)
             if (offset <= 0x3FFF)
             {
-                _memoryMapper.WriteByte(enumMemoryType.CPU, 0x2000 + (offset % 8), data);
+                _memoryMapper.WriteByte(0x2000 + (offset % 8), data);
                 return;
             }
 
             //OAM DMA
             if (offset == 0x4014)
             {
-                _memoryMapper.WriteByte(enumMemoryType.CPU, offset, data);
+                _memoryMapper.WriteByte(offset, data);
                 return;
             }
 
@@ -109,7 +109,7 @@ namespace XamariNES.CPU
             //Cartridge space: PRG ROM, PRG RAM, and mapper registers
             if (offset >= 0x4020)
             {
-                _memoryMapper.WriteByte(enumMemoryType.CPU, offset, data);
+                _memoryMapper.WriteByte(offset, data);
                 return;
             }
             

@@ -16,7 +16,7 @@ namespace XamariNES.Cartridge.Mappers.impl
         ///
         ///     32KB Capacity
         /// </summary>
-        private readonly byte[] _prgRom;
+        private readonly byte[] _prgRom = new byte[0x8000];
 
         /// <summary>
         ///     CHR ROM
@@ -39,12 +39,15 @@ namespace XamariNES.Cartridge.Mappers.impl
 
         public CNROM(byte[] prgRom, int prgRomBanks, byte[] chrRom, enumNametableMirroring nametableMirroring)
         {
-            _prgRom = prgRom;
             _chrRom = chrRom;
             NametableMirroring = nametableMirroring;
 
-            //Only one 16KB Bank means we need to mirror
-            _prgRomMirroring = prgRomBanks == 1;
+            //Copy over all of PRG ROM (16KB or 32KB)
+            Array.Copy(prgRom, 0, _prgRom, 0, prgRom.Length);
+
+            //If it was only 16KB, go ahead and mirror the second 16KB
+            if (prgRom.Length <= 0x4000)
+                Array.Copy(prgRom, 0, _prgRom, 0x4000, prgRom.Length);
         }
 
         /// <summary>
@@ -53,7 +56,7 @@ namespace XamariNES.Cartridge.Mappers.impl
         /// <param name="memoryType"></param>
         /// <param name="offset"></param>
         /// <returns></returns>
-        public byte ReadByte(enumMemoryType memoryType, int offset)
+        public byte ReadByte(int offset)
         {
             // CHR ROM
             if (offset < 0x2000)
@@ -61,17 +64,13 @@ namespace XamariNES.Cartridge.Mappers.impl
 
             //PPU Registers
             if (offset <= 0x3FFF)
-                return ReadInterceptors.TryGetValue(offset, out currentReadInterceptor) ? currentReadInterceptor(offset) : (byte)0x0;
+                return ReadInterceptors.TryGetValue(offset, out currentReadInterceptor)
+                    ? currentReadInterceptor(offset)
+                    : (byte) 0x0;
 
             //Fixed PRG ROM
             if (offset <= 0xFFFF)
-            {
-                //16KB PRG, Need to mirror
-                if (_prgRomMirroring && offset >= 0xC000)
-                    return _prgRom[offset - 0xC000];
-
                 return _prgRom[offset - 0x8000];
-            }
 
             throw new ArgumentOutOfRangeException(nameof(offset), offset, "Maximum value of offset is 0xFFFF");
         }
@@ -84,7 +83,7 @@ namespace XamariNES.Cartridge.Mappers.impl
         /// <param name="memoryType"></param>
         /// <param name="offset"></param>
         /// <param name="data"></param>
-        public void WriteByte(enumMemoryType memoryType, int offset, byte data)
+        public void WriteByte(int offset, byte data)
         {
             //CHR ROM+RAM Writes
             if (offset < 0x2000)

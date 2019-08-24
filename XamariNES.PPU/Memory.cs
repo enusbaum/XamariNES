@@ -39,7 +39,7 @@ namespace XamariNES.PPU
                 return _paletteMemory[GetPaletteRamOffsetIndex(offset)];
 
             if (offset < 0x2000) // CHR (ROM or RAM) pattern tables
-                return _memoryMapper.ReadByte(enumMemoryType.PPU, offset);
+                return _memoryMapper.ReadByte(offset);
 
             if (offset <= 0x3EFF) // Internal _vRam
                 return _ppuVram[VramOffsetToOffsetIndex(offset)];
@@ -56,7 +56,7 @@ namespace XamariNES.PPU
         {
             if (offset < 0x2000)
             {
-                _memoryMapper.WriteByte(enumMemoryType.PPU, offset, data);
+                _memoryMapper.WriteByte(offset, data);
                 return;
             }
 

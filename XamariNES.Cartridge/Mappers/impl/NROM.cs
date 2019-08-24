@@ -45,17 +45,23 @@ namespace XamariNES.Cartridge.Mappers.impl
         /// <param name="memoryType"></param>
         /// <param name="offset"></param>
         /// <returns></returns>
-        public byte ReadByte(enumMemoryType memoryType, int offset)
+        public byte ReadByte(int offset)
         {
-            switch (memoryType)
-            {
-                case enumMemoryType.PPU:
-                    return _chrRom[offset];
-                case enumMemoryType.CPU:
-                    return !ReadInterceptors.TryGetValue(offset, out currentReadInterceptor) ? _prgRom[CpuOffsetToPrgRomOffset(offset)] : currentReadInterceptor(offset);
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(memoryType), memoryType, null);
-            }
+            //CHR ROM
+            if (offset < 0x2000)
+                return _chrRom[offset];
+
+            //PPU Interceptors (Read)
+            if (offset <= 0x3FFF)
+                return ReadInterceptors.TryGetValue(offset, out currentReadInterceptor)
+                    ? currentReadInterceptor(offset)
+                    : (byte) 0x0;
+
+            //PRG ROM
+            if (offset <= 0xFFFF)
+                return _prgRom[offset - 0x8000];
+
+            throw new ArgumentOutOfRangeException(nameof(offset), offset, "Maximum value of offset is 0xFFFF");
         }
 
         /// <summary>
@@ -64,39 +70,30 @@ namespace XamariNES.Cartridge.Mappers.impl
         /// <param name="memoryType"></param>
         /// <param name="offset"></param>
         /// <param name="data"></param>
-        public void WriteByte(enumMemoryType memoryType, int offset, byte data)
+        public void WriteByte(int offset, byte data)
         {
-            switch (memoryType)
+            //CHR ROM
+            if (offset < 0x2000)
             {
-                case enumMemoryType.PPU:
-                    _chrRom[offset] = data;
-                    return;
-                case enumMemoryType.CPU:
-                    if (!WriteInterceptors.TryGetValue(offset, out currentWriteInterceptor))
-                    {
-                        _prgRom[CpuOffsetToPrgRomOffset(offset)] = data;
-                    }
-                    else
-                    {
-                        currentWriteInterceptor(offset, data);
-                    }
-                    return;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(memoryType), memoryType, null);
+                _chrRom[offset] = data;
+                return;
             }
-        }
 
-        /// <summary>
-        ///     Memory access from the CPU uses CPU mapped memory addressing.
-        ///
-        ///     In the NROM mapper, PGR ROM starts at 0x0000, CPU maps this to 0x8000
-        /// 
-        ///     Because of this, we subtract 0x8000 from the offset requested by the CPU
-        ///     to get the relative offset for the actual PGR address in _pgrRom
-        /// </summary>
-        /// <param name="offset"></param>
-        /// <returns></returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static int CpuOffsetToPrgRomOffset(int offset) => offset - 0x8000;
+            //PPU Interceptors
+            if (offset <= 0x3FFF || offset == 0x4014)
+            {
+                if (!WriteInterceptors.TryGetValue(offset, out currentWriteInterceptor)) return;
+                currentWriteInterceptor(offset, data);
+                return;
+            }
+
+            if (offset >= 0x8000 && offset <= 0xFFFF)
+            { 
+                _prgRom[offset - 0x8000] = data;
+                return;
+            }
+
+            throw new ArgumentOutOfRangeException(nameof(offset), offset, "Maximum value of offset is 0xFFFF");
+        }
     }
 }

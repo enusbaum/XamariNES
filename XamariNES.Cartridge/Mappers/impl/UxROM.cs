@@ -47,10 +47,9 @@ namespace XamariNES.Cartridge.Mappers.impl
         /// <summary>
         ///     Reads one byte from the specified bank, at the specified offset
         /// </summary>
-        /// <param name="memoryType"></param>
         /// <param name="offset"></param>
         /// <returns></returns>
-        public byte ReadByte(enumMemoryType memoryType, int offset)
+        public byte ReadByte(int offset)
         {
             // CHR ROM
             if (offset < 0x2000)
@@ -78,10 +77,9 @@ namespace XamariNES.Cartridge.Mappers.impl
         /// <summary>
         ///     Writes one byte to the specified bank, at the specified offset
         /// </summary>
-        /// <param name="memoryType"></param>
         /// <param name="offset"></param>
         /// <param name="data"></param>
-        public void WriteByte(enumMemoryType memoryType, int offset, byte data)
+        public void WriteByte(int offset, byte data)
         {
             //CHR ROM+RAM Writes
             if (offset < 0x2000)

@@ -8,9 +8,9 @@ namespace XamariNES.Cartridge.Mappers
     /// </summary>
     public interface IMapper
     {
-        byte ReadByte(enumMemoryType memoryType, int offset);
+        byte ReadByte(int offset);
 
-        void WriteByte(enumMemoryType memoryType, int offset, byte data);
+        void WriteByte(int offset, byte data);
 
         void RegisterReadInterceptor(MapperBase.ReadInterceptor readInterceptor, int offset);
 

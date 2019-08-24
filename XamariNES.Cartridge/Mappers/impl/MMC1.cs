@@ -83,7 +83,7 @@ namespace XamariNES.Cartridge.Mappers.impl
         /// <param name="memoryType"></param>
         /// <param name="offset"></param>
         /// <returns></returns>
-        public byte ReadByte(enumMemoryType memoryType, int offset)
+        public byte ReadByte(int offset)
         {
             // CHR Bank 0 == $0000-$0FFF
             // CHR Bank 1 == $1000-$1FFF
@@ -127,7 +127,7 @@ namespace XamariNES.Cartridge.Mappers.impl
         /// <param name="memoryType"></param>
         /// <param name="offset"></param>
         /// <param name="data"></param>
-        public void WriteByte(enumMemoryType memoryType, int offset, byte data)
+        public void WriteByte(int offset, byte data)
         {
             // CHR Bank 0 == $0000-$0FFF
             // CHR Bank 1 == $1000-$1FFF
