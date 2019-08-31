@@ -100,8 +100,9 @@ namespace XamariNES.Emulator
 
             //CPU startup state is always at 4 cycles
             _cpu.Cycles = 4;
-
+            
             int cpuTicks;
+            var instructions = 30;
             while (_powerOn)
             {
                 //If we're not idling (DMA), tick the CPU

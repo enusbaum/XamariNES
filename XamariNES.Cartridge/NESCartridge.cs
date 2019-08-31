@@ -129,6 +129,9 @@ namespace XamariNES.Cartridge
                 case 3:
                     MemoryMapper = new CNROM(_prgRom, _prgRomBanks, _chrRom, _nametableMirroring);
                     break;
+                case 4:
+                    MemoryMapper = new MMC3(_prgRom, _prgRomBanks, _chrRom, _nametableMirroring);
+                    break;
                 default:
                     throw new Exception($"Unsupported Mapper: {mapperNumber}");
             }

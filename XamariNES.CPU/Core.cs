@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using XamariNES.Cartridge.Mappers;
 using XamariNES.Common.Extensions;
@@ -9,7 +10,7 @@ using XamariNES.CPU.Enums;
 namespace XamariNES.CPU
 {
     /// <summary>
-    ///     Simulated MOS 6502 8-bit CPU Core
+    ///     Emulated MOS 6502 8-bit CPU Core within the Nintendo Ricoh 2A03
     ///     
     ///     In-Depth documentation: http://www.obelisk.me.uk/6502/reference.html
     /// </summary>
@@ -51,6 +52,11 @@ namespace XamariNES.CPU
         public Memory CPUMemory;
 
         /// <summary>
+        ///     Memory Mapper passed in by the emulator
+        /// </summary>
+        private readonly IMapper _memoryMapper;
+
+        /// <summary>
         ///     Total Cycles the core has executed since starting
         /// </summary>
         public long Cycles;
@@ -84,7 +90,8 @@ namespace XamariNES.CPU
         {
             Status = new CPUStatus();
             Instruction = new CPUInstruction();
-            CPUMemory = new Memory(memoryMapper, controller);
+            _memoryMapper = memoryMapper;
+            CPUMemory = new Memory(_memoryMapper, controller);
 
             //Setup the Instructions
             _cpuInstructions = DeclareInstructions();
@@ -2470,11 +2477,11 @@ namespace XamariNES.CPU
             A = 0;
             X = 0;
             Y = 0;
-            Status.FromByte(0x24);
+            Status.FromByte(0x24); //Default Status startup state
             Cycles = 0;
 
             //Zero out memory
-            for (int i = 0; i < 0x2000; i++)
+            for (var i = 0; i < 0x2000; i++)
             {
                 CPUMemory.WriteByte(i, 0x0);
             }
@@ -2512,6 +2519,16 @@ namespace XamariNES.CPU
                 PC = BitConverter.ToUInt16(new[] { CPUMemory.ReadByte(0xFFFA), CPUMemory.ReadByte(0xFFFB) }, 0);
                 Status.InterruptDisable = true;
                 NMI = false;
+            }
+
+            //Check for IRQ Interrupt from MMC3 Mapper
+            if (!Status.InterruptDisable && _memoryMapper is IA12Connection connection && connection.isIRQ)
+            {
+                Push((ushort)PC);
+                Push(Status.ToByte());
+                PC = BitConverter.ToUInt16(new[] { CPUMemory.ReadByte(0xFFFE), CPUMemory.ReadByte(0xFFFF) }, 0);
+                Status.InterruptDisable = true;
+                connection.isIRQ = false;
             }
 
             //Decode
