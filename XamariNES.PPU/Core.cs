@@ -118,31 +118,40 @@ namespace XamariNES.PPU
             //the CPU memory controller will handle the mirroring index
 
             //PPUCTRL ($2000, WRITE)
-            memoryMapper.RegisterWriteInterceptor(delegate (int offset, byte value)
+            memoryMapper.RegisterWriteInterceptor(delegate(int offset, byte value)
             {
-                    //Update Register
-                    _registerPPUCTRL = value;
+                UpdatePPUSTATUSRegister(value);
 
-                    //Cache the new value here
-                    _registerPPUSCROLL = (_registerPPUSCROLL & 0xF3FF) | ((value & 0x03) << 10);
+                //Update Register
+                _registerPPUCTRL = value;
+
+                //Cache the new value here
+                _registerPPUSCROLL = (_registerPPUSCROLL & 0xF3FF) | ((value & 0x03) << 10);
             }, 0x2000);
 
             //PPUMASK ($2001, WRITE)
-            memoryMapper.RegisterWriteInterceptor(delegate (int offset, byte value) { _registerPPUMASK = value; }, 0x2001);
+            memoryMapper.RegisterWriteInterceptor(delegate(int offset, byte value)
+            {
+                UpdatePPUSTATUSRegister(value);
+
+                _registerPPUMASK = value;
+            }, 0x2001);
 
             //PPUSTATUS ($2002, READ)
-            memoryMapper.RegisterReadInterceptor(delegate (int offset)
+            memoryMapper.RegisterReadInterceptor(delegate
             {
                 var output = _registerPPUSTATUS;
-                _registerPPUSTATUS &= PPUStatusFlags.VerticalBlankStarted;
+                _registerPPUSTATUS = _registerPPUSTATUS.RemoveFlag(PPUStatusFlags.VerticalBlankStarted);
                 _writeOrderToggle = 0;
                 return output;
 
             }, 0x2002);
 
             //OAMADDR ($2003, WRITE)
-            memoryMapper.RegisterWriteInterceptor(delegate (int offset, byte value)
+            memoryMapper.RegisterWriteInterceptor(delegate(int offset, byte value)
             {
+                UpdatePPUSTATUSRegister(value);
+
                 _registerOAMADDR = value;
             }, 0x2003);
 
@@ -150,61 +159,66 @@ namespace XamariNES.PPU
             memoryMapper.RegisterReadInterceptor(offset => _oamData[_registerOAMADDR], 0x2004);
 
             //OAMDATA ($2004, WRITE)
-            memoryMapper.RegisterWriteInterceptor(delegate (int offset, byte value)
+            memoryMapper.RegisterWriteInterceptor(delegate(int offset, byte value)
             {
-                    //When data is written to the Data register, we buffer it our our array here
-                    _oamData[_registerOAMADDR] = value;
+                UpdatePPUSTATUSRegister(value);
+
+                //When data is written to the Data register, we buffer it our our array here
+                _oamData[_registerOAMADDR] = value;
                 _registerOAMADDR++;
 
             }, 0x2004);
 
             //PPUSCROLL ($2005, WRITE)
-            memoryMapper.RegisterWriteInterceptor(delegate (int offset, byte value)
+            memoryMapper.RegisterWriteInterceptor(delegate(int offset, byte value)
             {
-                    //Update Local Values
-                    if (_writeOrderToggle == 0)
+                UpdatePPUSTATUSRegister(value);
+
+                //Update Local Values
+                if (_writeOrderToggle == 0)
                 {
-                    this._registerPPUSCROLL = (this._registerPPUSCROLL & 0xFFE0) | (value >> 3);
-                    _X = (byte)(value & 0x07);
+                    _registerPPUSCROLL = (_registerPPUSCROLL & 0xFFE0) | (value >> 3);
+                    _X = (byte) (value & 0x07);
                     _writeOrderToggle = 1;
                 }
                 else
                 {
-                    this._registerPPUSCROLL &= 0xC1F;
-                    this._registerPPUSCROLL |= (value & 0x07) << 12; // CBA
-                        this._registerPPUSCROLL |= (value & 0xF8) << 2; // HG FED
-                        _writeOrderToggle = 0;
+                    _registerPPUSCROLL &= 0xC1F;
+                    _registerPPUSCROLL |= (value & 0x07) << 12; // CBA
+                    _registerPPUSCROLL |= (value & 0xF8) << 2; // HG FED
+                    _writeOrderToggle = 0;
                 }
             }, 0x2005);
 
             //PPUADDR ($2006, WRITE)
-            memoryMapper.RegisterWriteInterceptor(
-                delegate (int offset, byte value)
+            memoryMapper.RegisterWriteInterceptor(delegate(int offset, byte value)
+            {
+                UpdatePPUSTATUSRegister(value);
+
+                _registerPPUADDR = value;
+                if (_writeOrderToggle == 0)
                 {
-                    _registerPPUADDR = value;
-                    if (_writeOrderToggle == 0)
-                    {
-                        this._registerPPUSCROLL = (this._registerPPUSCROLL & 0x00FF) | (value << 8);
-                        _writeOrderToggle = 1;
-                    }
-                    else
-                    {
-                        this._registerPPUSCROLL = (this._registerPPUSCROLL & 0xFF00) | value;
-                        _registerPPUADDR = this._registerPPUSCROLL;
-                        _writeOrderToggle = 0;
-                    }
-                }, 0x2006);
+                    _registerPPUSCROLL = (_registerPPUSCROLL & 0x00FF) | (value << 8);
+                    _writeOrderToggle = 1;
+                }
+                else
+                {
+                    _registerPPUSCROLL = (_registerPPUSCROLL & 0xFF00) | value;
+                    _registerPPUADDR = _registerPPUSCROLL;
+                    _writeOrderToggle = 0;
+                }
+            }, 0x2006);
 
             //PPUDATA ($2007, READ)
-            memoryMapper.RegisterReadInterceptor(delegate (int offset)
+            memoryMapper.RegisterReadInterceptor(delegate
             {
                 var data = PPUMemory.ReadByte(_registerPPUADDR);
 
-                    // Buffered read emulation
-                    // https://wiki.nesdev.com/w/index.php/PPU_registers#The_PPUDATA_read_buffer_.28post-fetch.29
-                    if (_registerPPUADDR < 0x3F00)
+                // Buffered read emulation
+                // https://wiki.nesdev.com/w/index.php/PPU_registers#The_PPUDATA_read_buffer_.28post-fetch.29
+                if (_registerPPUADDR < 0x3F00)
                 {
-                    byte bufferedData = _registerPPUDATABuffer;
+                    var bufferedData = _registerPPUDATABuffer;
                     _registerPPUDATABuffer = data;
                     data = bufferedData;
                 }
@@ -213,9 +227,9 @@ namespace XamariNES.PPU
                     _registerPPUDATABuffer = PPUMemory.ReadByte(_registerPPUADDR - 0x1000);
                 }
 
-                    //Increment PPU VRAM Address depending on VRAMAddressIncrement Flag
-                    _registerPPUADDR +=
-                     _registerPPUCTRL.IsFlagSet(PPUCtrlFlags.VRAMAddressIncrement)
+                //Increment PPU VRAM Address depending on VRAMAddressIncrement Flag
+                _registerPPUADDR +=
+                    _registerPPUCTRL.IsFlagSet(PPUCtrlFlags.VRAMAddressIncrement)
                         ? 32
                         : 1;
 
@@ -224,23 +238,27 @@ namespace XamariNES.PPU
             }, 0x2007);
 
             //PPUDATA ($2007, WRITE)
-            memoryMapper.RegisterWriteInterceptor(delegate (int offset, byte value)
+            memoryMapper.RegisterWriteInterceptor(delegate(int offset, byte value)
             {
+                UpdatePPUSTATUSRegister(value);
+
                 PPUMemory.WriteByte(_registerPPUADDR, value);
 
-                    //Increment PPU VRAM Address depending on VRAMAddressIncrement Flag
-                    _registerPPUADDR +=
-                   _registerPPUCTRL.IsFlagSet(PPUCtrlFlags.VRAMAddressIncrement)
+                //Increment PPU VRAM Address depending on VRAMAddressIncrement Flag
+                _registerPPUADDR +=
+                    _registerPPUCTRL.IsFlagSet(PPUCtrlFlags.VRAMAddressIncrement)
                         ? 32
                         : 1;
 
             }, 0x2007);
 
             //OAMDMA ($4014, WRITE)
-            memoryMapper.RegisterWriteInterceptor(delegate (int offset, byte value)
-            {
-                _oamData = dmaWriteDelegate(_oamData, _registerOAMADDR, value << 8);
-            }, 0x4014);
+            memoryMapper.RegisterWriteInterceptor(
+                delegate(int offset, byte value)
+                {
+                    UpdatePPUSTATUSRegister(value);
+                    _oamData = dmaWriteDelegate(_oamData, _registerOAMADDR, value << 8);
+                }, 0x4014);
         }
 
         /// <summary>
@@ -380,7 +398,7 @@ namespace XamariNES.PPU
                                 : 0x0000;
                         var patternTableTileLowAddress = patternTableTileLowBase + _nameTableByte * 16 + FineY();
                         _tileDataLow = PPUMemory.ReadByte(patternTableTileLowAddress);
-                        break; 
+                        break;
                     //Pattern table tile high(+8 bytes from pattern table tile low)
                     case 7:
                         var patternTableTileHighBase =
@@ -460,9 +478,10 @@ namespace XamariNES.PPU
             }
 
             // Skip last cycle of prerender scanline on odd frames
-            if (_registerPPUMASK.IsFlagSet(PPUMaskFlags.ShowSprites) || _registerPPUMASK.IsFlagSet(PPUMaskFlags.ShowBackground))
+            if (_registerPPUMASK.IsFlagSet(PPUMaskFlags.ShowSprites) ||
+                _registerPPUMASK.IsFlagSet(PPUMaskFlags.ShowBackground))
             {
-                if (_currentScanline == MaxScanline && _currentCycle == 339  && _frameOrderToggle == 1 )
+                if (_currentScanline == MaxScanline && _currentCycle == 339 && _frameOrderToggle == 1)
                 {
                     _frameOrderToggle ^= 1;
                     _currentScanline = 0;
@@ -520,7 +539,7 @@ namespace XamariNES.PPU
                 {
                     color = LookupBackgroundColor(bgPixelData);
                 }
-                else 
+                else
                 {
                     // Both pixels opaque, choose depending on sprite priority
 
@@ -549,7 +568,7 @@ namespace XamariNES.PPU
             var paletteNum = (data >> 2) & 0x3;
 
             // Special case for universal background color
-            if (colorNum == 0) return  PPUMemory.ReadByte(0x3F00);
+            if (colorNum == 0) return PPUMemory.ReadByte(0x3F00);
 
             int paletteAddress;
             switch (paletteNum)
@@ -631,7 +650,8 @@ namespace XamariNES.PPU
 
             // 8x8 sprites all come from the same pattern table as specified by a write to PPUCTRL
             // 8x16 sprites come from a pattern table defined in their Data data
-            var currentSpritePatternTableOffset =  _registerPPUCTRL.IsFlagSet(PPUCtrlFlags.SpriteTableAddress) ? 0x1000 : 0x0000;
+            var currentSpritePatternTableOffset =
+                _registerPPUCTRL.IsFlagSet(PPUCtrlFlags.SpriteTableAddress) ? 0x1000 : 0x0000;
 
             // Get sprite pattern bitfield
             for (var i = 0; i < _countedSprites * 4; i += 4)
@@ -649,8 +669,8 @@ namespace XamariNES.PPU
                     // ar 8x8 or 8x16
                     if (_registerPPUCTRL.IsFlagSet(PPUCtrlFlags.SpriteSize))
                     {
-                        currentSpritePatternTableOffset =(_sprites[i + 1] & 1) * 0x1000;
-                        patternIndex = (byte)(_sprites[i + 1] & 0xFE);
+                        currentSpritePatternTableOffset = (_sprites[i + 1] & 1) * 0x1000;
+                        patternIndex = (byte) (_sprites[i + 1] & 0xFE);
                     }
                     else
                     {
@@ -669,7 +689,7 @@ namespace XamariNES.PPU
 
                     var paletteNum = _sprites[i + 2] & 0x03;
                     _spriteIndex = i / 4;
-                    return (byte)(((paletteNum << 2) | colorNum) & 0xF);
+                    return (byte) (((paletteNum << 2) | colorNum) & 0xF);
                 }
             }
 
@@ -703,7 +723,7 @@ namespace XamariNES.PPU
             // Read the 2 bytes in the bitfield for the y coordinate
             var pattern = new byte[2];
             pattern[0] = PPUMemory.ReadByte(yAddr);
-            pattern[1] = PPUMemory.ReadByte( yAddr + 8);
+            pattern[1] = PPUMemory.ReadByte(yAddr + 8);
 
             // Extract correct bits based on x coordinate
             var loBit = (pattern[0] >> (7 - xPos)) & 1;
@@ -732,7 +752,7 @@ namespace XamariNES.PPU
                 // Add palette number
                 var fullPixelData = (((palette << 2) | colorNum) & 0xF);
 
-                data |= (uint)(fullPixelData << (4 * i));
+                data |= (uint) (fullPixelData << (4 * i));
             }
 
             _tileShiftRegister &= 0xFFFFFFFF;
@@ -774,7 +794,7 @@ namespace XamariNES.PPU
         private void IncrementY()
         {
             if ((_registerPPUADDR & 0x7000) != 0x7000) // if fine Y < 7
-            { 
+            {
                 _registerPPUADDR += 0x1000; // increment fine Y
             }
             else
@@ -794,6 +814,7 @@ namespace XamariNES.PPU
                         y++; // Increment coarse Y
                         break;
                 }
+
                 _registerPPUADDR = (_registerPPUADDR & ~0x03E0) | (y << 5); // Put coarse Y back into v
             }
         }
@@ -807,7 +828,7 @@ namespace XamariNES.PPU
         {
             if (!_registerPPUMASK.IsFlagSet(PPUMaskFlags.ShowBackground)) return 0;
             if (!_registerPPUMASK.IsFlagSet(PPUMaskFlags.ShowBackgroundInLeftMost) && (_currentCycle - 1) < 8) return 0;
-            return (byte)((_tileShiftRegister >> (_X * 4)) & 0xF);
+            return (byte) ((_tileShiftRegister >> (_X * 4)) & 0xF);
         }
 
         /*---------------------------
@@ -826,7 +847,7 @@ namespace XamariNES.PPU
         /// </summary>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private int CoarseX() =>  _registerPPUADDR & 0x1f;
+        private int CoarseX() => _registerPPUADDR & 0x1f;
 
         /// <summary>
         ///     Retrieve Coarse Y
@@ -840,6 +861,21 @@ namespace XamariNES.PPU
         /// </summary>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private int FineY() =>  (_registerPPUADDR >> 12) & 0x7;
-}
+        private int FineY() => (_registerPPUADDR >> 12) & 0x7;
+
+        /// <summary>
+        ///     The least significant 5 bits of any write, to any registers
+        ///     is saved to the least significant 5 bits of PPU status.
+        ///
+        ///     To do this, we take the first three bits of the existing PPUSTATUS
+        ///     register value, then OR it with the 5 least significant bits of the
+        ///     last value written to a register.
+        ///
+        ///     More Info: https://wiki.nesdev.com/w/index.php/PPU_registers#PPUSTATUS
+        /// </summary>
+        /// <param name="value"></param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void UpdatePPUSTATUSRegister(byte value) =>
+            _registerPPUSTATUS = (byte) ((_registerPPUSTATUS & 0xE0) | (value & 0x1F));
+    }
 }
