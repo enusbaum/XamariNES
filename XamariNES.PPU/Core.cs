@@ -301,26 +301,25 @@ namespace XamariNES.PPU
             // Set our Current Scan Line Status
             // Only Lines 0 to 239 are visible
             //---------------------------------
-            if (_currentScanline < 240)
+            if (_currentScanline == -1)
             {
-                if (_currentScanline == -1)
-                {
-                    _scanLineState |= ScanLineStateFlags.PreRender;
-                }
-                else
-                {
-                    _scanLineState = ScanLineStateFlags.Visible;
-                }
+                _scanLineState = ScanLineStateFlags.PreRender;
+            }
+            else if (_currentScanline < 240)
+            {
+                _scanLineState = ScanLineStateFlags.Visible;
+            }
+            else if (_currentScanline == 240)
+            {
+                _scanLineState = ScanLineStateFlags.PostRender;
             }
             else if (_currentScanline > 240)
             {
                 _scanLineState = ScanLineStateFlags.VBlank;
+
                 if (_currentScanline == 261)
                     _scanLineState |= ScanLineStateFlags.PreRender;
-
             }
-            else if (_currentScanline == 240)
-                _scanLineState = ScanLineStateFlags.PostRender;
 
             //---------------------------------
             // Set our current Cycle State
