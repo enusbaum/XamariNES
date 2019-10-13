@@ -13,9 +13,9 @@ Things only got better when Xamarin.Forms was released, which allowed me to basi
 | iOS | YES | Release mode using LLVM compiler runs at full speed |
 | Android | YES | Release mode runs at full speed on MOST devices |
 | macOS | YES-ish | Mouse support for touch events, need to add keyboard bindings |
-| UWP | YES-ish | Mouse support for touch events, need to add keyboard bindings |
-| WPF | NO | Waiting for .Net Core 3.0 Final |
-| WASM | NO| ALTHOUGH, Completely possible using [Ooui](https://github.com/praeclarum/Ooui/wiki/Xamarin.Forms-on-the-Web) |
+| UWP | NO | Upgrading to .Net Core 3.0/Standard 2.1 breaks UWP support. Should be fixed with the 19H2 SDK upadte for Windows 10 |
+| WPF | NO (but soon!) | [PR](https://github.com/xamarin/Xamarin.Forms/pull/7063) for WPF Xamarin.Forms suppor for .Net Core 3/Standard 2.1  |
+| WASM | NO | ALTHOUGH, Completely possible using [Ooui](https://github.com/praeclarum/Ooui/wiki/Xamarin.Forms-on-the-Web) |
 
 # Loading ROMS
 
