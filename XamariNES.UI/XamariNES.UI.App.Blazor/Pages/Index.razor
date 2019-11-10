@@ -1,0 +1,42 @@
+﻿@page "/"
+@inject HttpClient Http
+<h1>Welcome to XamariNES! A Cross platform NES Emulator Written in C#</h1>
+
+This is the Blazor Preview of XamariNES! Enjoy!
+<br />
+<button class="btn btn-primary" @onclick="StartEmulator">Start</button><br /><br />
+<img id="emulatorScreen" src="@String.Format("data:image/bmp;base64,{0}", Convert.ToBase64String(currentFrame))" height="240" width="256" />
+
+@code
+{
+    private byte[] currentFrame = new byte[256 * 240];
+    private byte[] romData;
+    private XamariNES.Emulator.NESEmulator _emulator;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        //Setup the Emulator
+        romData = await Http.GetByteArrayAsync("roms/smb.nes");
+        _emulator = new Emulator.NESEmulator(romData, GetFrameFromEmulator, Emulator.Enums.enumEmulatorSpeed.Turbo);
+        Console.WriteLine("Emulator Loaded");
+
+        Array.Clear(currentFrame, 0, currentFrame.Length);
+
+        return;
+    }
+
+    private void StartEmulator()
+    {
+        Console.WriteLine("Starting Emulator");
+        _emulator.Start();
+        Console.WriteLine("Emulator Started");
+    }
+
+    private void GetFrameFromEmulator(byte[] frame)
+    {
+        //currentFrame = frame;
+        Console.WriteLine("Frame");
+    }
+}

@@ -68,9 +68,9 @@ namespace XamariNES.Emulator
         /// <returns></returns>
         private byte[] DMATransfer(byte[] oam, int oamOffset, int offset)
         {
-            for(var i = 0; i < 256; i++)
+            for (var i = oamOffset; i < oamOffset + 256; i++)
             {
-                oam[(oamOffset + i) % 256] = _cpu.CPUMemory.ReadByte(offset + i);
+                oam[i % 256] = _cpu.CPUMemory.ReadByte(offset + i);
             }
 
             /*
