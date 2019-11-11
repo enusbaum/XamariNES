@@ -1,9 +1,10 @@
 ﻿@page "/"
 @inject HttpClient Http
 <h1>Welcome to XamariNES! A Cross platform NES Emulator Written in C#</h1>
-<p>This is a port of the XamariNES Nintendo Emulator to work with Blazor WebAssmebly. Because this is just a proof of concept, performance isn't great, but it works!</p>
-<br />
-<button class="btn btn-primary" @onclick="StartEmulator">Power On</button><br /><br />
+This is a port of the XamariNES Nintendo Emulator to work with Blazor WebAssmebly. Because this is just a proof of concept, performance isn't great, but it works!<br /><br />
+<b>Source:</b> <a target="_blank" href="https://github.com/enusbaum/XamariNES/tree/dotnetcore3.1">https://github.com/enusbaum/XamariNES/tree/dotnetcore3.1</a><br />
+<b>Twitter:</b> <a target="_blank" href="https://twitter.com/ericnusbaum">ericnusbaum</a><br /><br />
+<button class="btn btn-primary" @onclick="StartEmulator">Power On</button><br />
 <img id="emulatorScreen" src="@sbEncodedBitMapData.ToString()" height="480" width="512" /><br /><br />
 <b>Frames Rendered:</b> @framesRendered<br />
 (It takes ~30 frames before the NES actually displays an image)
