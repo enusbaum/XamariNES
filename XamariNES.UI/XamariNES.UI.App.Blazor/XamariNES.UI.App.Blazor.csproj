@@ -13,8 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\XamariNES.Common\XamariNES.Common.csproj" />
     <ProjectReference Include="..\..\XamariNES.Emulator\XamariNES.Emulator.csproj" />
   </ItemGroup>
-
-
 </Project>

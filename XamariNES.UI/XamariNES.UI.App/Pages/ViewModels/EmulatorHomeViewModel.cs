@@ -113,7 +113,7 @@ namespace XamariNES.UI.App.Pages.ViewModels
         ///     screen tearing. Probably need to refactor this.
         /// </summary>
         /// <param name="frame"></param>
-        private void GetFrameFromEmulator(byte[] frame)
+        private async Task GetFrameFromEmulator(byte[] frame)
         {
             _frame = frame;
             MessagingCenter.Send(this, "InvalidateEmulatorSurface");

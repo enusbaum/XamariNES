@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics;
-using System.Threading;
 using System.Threading.Tasks;
 using XamariNES.Cartridge;
 using XamariNES.Controller;
@@ -11,7 +10,7 @@ namespace XamariNES.Emulator
     {
 
         //Frame Rendering Components
-        public delegate void ProcessFrameDelegate(byte[] outputFrame);
+        public delegate Task ProcessFrameDelegate(byte[] outputFrame);
         private readonly ProcessFrameDelegate _processFrame;
 
         //NES System Components
@@ -93,7 +92,7 @@ namespace XamariNES.Emulator
         ///
         ///     Task will run until the _powerOn value is set to false
         /// </summary>
-        private void Run()
+        private async Task Run()
         {
             //Frame Timing Stopwatch
             var sw = Stopwatch.StartNew();
@@ -137,19 +136,20 @@ namespace XamariNES.Emulator
                 //If there is, let's render it
                 if (_ppu.FrameReady)
                 {
-                    _processFrame(_ppu.FrameBuffer);
+                    await _processFrame(_ppu.FrameBuffer);
                     _ppu.FrameReady = false;
 
                     //Throttle our frame rate here to the desired rate (if required)
                     switch (_enumEmulatorSpeed)
                     {
                         case enumEmulatorSpeed.Turbo:
-                            continue;
+                            await Task.Delay(1);
+                            break;
                         case enumEmulatorSpeed.Normal when sw.ElapsedMilliseconds < 17:
-                            Thread.Sleep((int)(17 - sw.ElapsedMilliseconds));
+                            await Task.Delay((int)(17 - sw.ElapsedMilliseconds));
                             break;
                         case enumEmulatorSpeed.Half when sw.ElapsedMilliseconds < 32:
-                            Thread.Sleep((int)(32 - sw.ElapsedMilliseconds));
+                            await Task.Delay((int)(32 - sw.ElapsedMilliseconds));
                             break;
                     }
                     sw.Restart();

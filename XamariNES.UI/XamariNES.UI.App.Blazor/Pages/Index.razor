@@ -1,29 +1,27 @@
 ﻿@page "/"
 @inject HttpClient Http
 <h1>Welcome to XamariNES! A Cross platform NES Emulator Written in C#</h1>
-
-This is the Blazor Preview of XamariNES! Enjoy!
+<p>This is a port of the XamariNES Nintendo Emulator to work with Blazor WebAssmebly. Because this is just a proof of concept, performance isn't great, but it works!</p>
 <br />
-<button class="btn btn-primary" @onclick="StartEmulator">Start</button><br /><br />
-<img id="emulatorScreen" src="@String.Format("data:image/bmp;base64,{0}", Convert.ToBase64String(currentFrame))" height="240" width="256" />
+<button class="btn btn-primary" @onclick="StartEmulator">Power On</button><br /><br />
+<img id="emulatorScreen" src="@sbEncodedBitMapData.ToString()" height="480" width="512" /><br /><br />
+<b>Frames Rendered:</b> @framesRendered<br />
+(It takes ~30 frames before the NES actually displays an image)
 
 @code
 {
-    private byte[] currentFrame = new byte[256 * 240];
-    private byte[] romData;
     private XamariNES.Emulator.NESEmulator _emulator;
+    private XamariNES.Common.Bitmap.BitmapFactory _bitmapFactory = new XamariNES.Common.Bitmap.BitmapFactory();
+    private int framesRendered;
+    private System.Text.StringBuilder sbEncodedBitMapData = new System.Text.StringBuilder(100000);
 
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
 
         //Setup the Emulator
-        romData = await Http.GetByteArrayAsync("roms/smb.nes");
-        _emulator = new Emulator.NESEmulator(romData, GetFrameFromEmulator, Emulator.Enums.enumEmulatorSpeed.Turbo);
+        _emulator = new Emulator.NESEmulator(await Http.GetByteArrayAsync("roms/smb.nes"), GetFrameFromEmulator, Emulator.Enums.enumEmulatorSpeed.Turbo);
         Console.WriteLine("Emulator Loaded");
-
-        Array.Clear(currentFrame, 0, currentFrame.Length);
-
         return;
     }
 
@@ -34,9 +32,12 @@ This is the Blazor Preview of XamariNES! Enjoy!
         Console.WriteLine("Emulator Started");
     }
 
-    private void GetFrameFromEmulator(byte[] frame)
+    private async Task GetFrameFromEmulator(byte[] frame)
     {
-        //currentFrame = frame;
-        Console.WriteLine("Frame");
+        sbEncodedBitMapData.Clear();
+        sbEncodedBitMapData.Append("data:image/bmp;base64,");
+        sbEncodedBitMapData.Append(Convert.ToBase64String(_bitmapFactory.BitmapFromByteArray(frame)));
+        this.StateHasChanged();
+        framesRendered++;
     }
 }
