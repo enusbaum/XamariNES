@@ -15,13 +15,16 @@ namespace XamariNES.Emulator
         private readonly ProcessFrameDelegate _processFrame;
 
         //NES System Components
-        private readonly CPU.Core _cpu;
-        private readonly PPU.Core _ppu;
+        ////private readonly CPU.Core _cpu;
+        ////private readonly PPU.Core _ppu;
+        private CPU.Core _cpu;
+        private PPU.Core _ppu;
         private readonly NESCartridge _cartridge;
         public readonly IController Controller1;
         private readonly enumEmulatorSpeed _enumEmulatorSpeed;
         private Task _emulatorTask;
         private bool _powerOn;
+        private byte[] _romData;
 
         //Public Statistics
         public long TotalCPUCycles => _cpu.Cycles;
@@ -32,6 +35,8 @@ namespace XamariNES.Emulator
 
         public NESEmulator(byte[] rom, ProcessFrameDelegate processFrameDelegate, enumEmulatorSpeed emulatorSpeed = enumEmulatorSpeed.Normal)
         {
+            _romData = rom;
+
             //Setup Emulator Components
             Controller1 = new NESController();
             _cartridge = new NESCartridge(rom);
@@ -42,10 +47,23 @@ namespace XamariNES.Emulator
         }
 
         /// <summary>
+        ///     Load new ROM into memory
+        /// </summary>
+        /// <param name="romData"></param>
+        public void LoadRom(byte[] romData)
+        {
+            _romData = romData;
+        }
+
+        /// <summary>
         ///     News up and Starts the Emulator Task
         /// </summary>
         public void Start()
         {
+            _cartridge.LoadROM(_romData);
+            _ppu = new PPU.Core(_cartridge.MemoryMapper, DMATransfer);
+            _cpu = new CPU.Core(_cartridge.MemoryMapper, Controller1);
+
             _cpu.Reset();
             _ppu.Reset();
             _powerOn = true;

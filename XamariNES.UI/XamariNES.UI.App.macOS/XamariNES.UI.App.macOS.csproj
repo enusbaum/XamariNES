@@ -58,6 +58,9 @@
     </XamMacArch>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Plugin.FilePicker, Version=2.1.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Xamarin.Plugin.FilePicker.2.1.34\lib\xamarinmac20\Plugin.FilePicker.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="Xamarin.Forms.Core, Version=2.0.0.0, Culture=neutral, processorArchitecture=MSIL">

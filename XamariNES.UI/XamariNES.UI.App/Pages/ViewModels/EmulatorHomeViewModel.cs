@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using Plugin.FilePicker;
+using Plugin.FilePicker.Abstractions;
 using SkiaSharp;
 using SkiaSharp.Views.Forms;
 using Xamarin.Forms;
@@ -40,6 +43,7 @@ namespace XamariNES.UI.App.Pages.ViewModels
 
         //Console Button Areas
         private SKRect _powerOnButtonRect;
+        private SKRect _loadCartridgeButtonRect;
 
         //Controller Button Areas
         private SKRect _controllerUpRect;
@@ -203,6 +207,10 @@ namespace XamariNES.UI.App.Pages.ViewModels
                         MessagingCenter.Send(this, "InvalidateEmulatorSurface");
                     }
                 }
+                else if (_loadCartridgeButtonRect.Contains(e.Location))
+                {
+                    SelectRomFile();
+                }
 
                 MessagingCenter.Send(this, "InvalidateConsoleSurface");
             }
@@ -286,6 +294,75 @@ namespace XamariNES.UI.App.Pages.ViewModels
 
             //Set Power Button Rectangle, used to determine touch event location
             _powerOnButtonRect = new SKRect(170 * xRatio, 240 * yRatio, 270 * xRatio, 280 * yRatio);
+
+            // Load cartridge - TODO: Fix location on screen
+            _loadCartridgeButtonRect = new SKRect(170 * xRatio, 100 * yRatio, 370 * xRatio, 240 * yRatio);
+        }
+
+        /// <summary>
+        ///     Select NES ROM using local file explorer
+        /// </summary>
+        private async Task SelectRomFile()
+        {
+            string[] fileTypes = null;
+
+            //if (Device.RuntimePlatform == Device.Android)
+            //{
+            //    fileTypes = new string[] { "image/png", "image/jpeg" };
+            //}
+
+            //if (Device.RuntimePlatform == Device.iOS)
+            //{
+            //    fileTypes = new string[] { "public.image" }; // same as iOS constant UTType.Image
+            //}
+
+            if (Device.RuntimePlatform == Device.UWP)
+            {
+                fileTypes = new string[] { ".nes", ".zip" };
+            }
+
+            if (Device.RuntimePlatform == Device.WPF)
+            {
+                fileTypes = new string[] { "NES files (*.nes)|*.nes", "ZIP files (*.zip)|*.zip" };
+            }
+
+            var file = await CrossFilePicker.Current.PickFile(fileTypes);
+            
+            LoadNewGameCartridge(file);
+        }
+
+        /// <summary>
+        ///     Load game data from selected file
+        /// </summary>
+        /// <param name="file"></param>
+        private void LoadNewGameCartridge(FileData file)
+        {
+            if (file != null)
+            {
+                if (file.FileName.EndsWith("nes", StringComparison.OrdinalIgnoreCase))
+                {
+                    byte[] romData = ReadStreamData(file.GetStream());
+                    _emu.LoadRom(romData);
+                }
+                else if (file.FileName.EndsWith("zip", StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new NotImplementedException();
+                }
+            }
+        }
+
+        /// <summary>
+        ///     Convert file stream to byte array
+        /// </summary>
+        /// <param name="fileStream">File stream</param>
+        /// <returns>ROM's byte array</returns>
+        public static byte[] ReadStreamData(Stream fileStream)
+        {
+            using (MemoryStream ms = new MemoryStream())
+            {
+                fileStream.CopyTo(ms);
+                return ms.ToArray();
+            }
         }
     }
 }
