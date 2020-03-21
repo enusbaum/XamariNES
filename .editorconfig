@@ -1,0 +1,33 @@
+#
+# Used by Visual Studio add-in for EditorConfig http://EditorConfig.org
+# This file provides formatting rules for the project so you can
+# keep your own personal defaults for others 
+#
+# Download:
+# VS Add-in     https://visualstudiogallery.msdn.microsoft.com/c8bccfe2-650c-4b42-bc5c-845e21f96328
+# Properties    http://editorconfig.org/#supported-properties
+# Source        https://github.com/editorconfig/editorconfig-visualstudio
+# Project Rules https://kent-boogaart.com/blog/editorconfig-reference-for-c-developers
+#
+
+# Top-most EditorConfig file
+root = true
+
+# All generic files should use MSDOS style endings, not Unix (lf)
+[*]
+end_of_line = crlf
+trim_trailing_whitespace = true
+
+# 2-column space/tab indentation
+[*.cs]
+indent_style = space
+indent_size = 4
+trim_trailing_whitespace = true
+
+# .NET specific configurations
+dotnet_sort_system_directives_first = true
+
+[*.{xaml,xml,json}]
+indent_style = space
+indent_size = 2
+trim_trailing_whitespace = true
