@@ -295,8 +295,8 @@ namespace XamariNES.UI.App.Pages.ViewModels
             //Set Power Button Rectangle, used to determine touch event location
             _powerOnButtonRect = new SKRect(170 * xRatio, 240 * yRatio, 270 * xRatio, 280 * yRatio);
 
-            // Load cartridge
-            _loadCartridgeButtonRect = new SKRect(170 * xRatio, 200 * yRatio, 270 * xRatio, 240 * yRatio);
+            // Load cartridge - TODO: Fix location on screen
+            _loadCartridgeButtonRect = new SKRect(170 * xRatio, 100 * yRatio, 370 * xRatio, 240 * yRatio);
         }
 
         /// <summary>
@@ -306,11 +306,10 @@ namespace XamariNES.UI.App.Pages.ViewModels
         {
             string[] fileTypes = null;
 
-            if (Device.RuntimePlatform == Device.Android)
-            {
-                //fileTypes = new string[] { "image/png", "image/jpeg" };
-                fileTypes = new string[] {};
-            }
+            //if (Device.RuntimePlatform == Device.Android)
+            //{
+            //    fileTypes = new string[] { "image/png", "image/jpeg" };
+            //}
 
             //if (Device.RuntimePlatform == Device.iOS)
             //{
